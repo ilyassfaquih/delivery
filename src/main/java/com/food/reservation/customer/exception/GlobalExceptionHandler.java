@@ -1,4 +1,4 @@
-package com.food.reservation.exception;
+package com.food.reservation.customer.exception;
 
 import com.food.reservation.customer.enumeration.ValidationError;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -9,90 +9,74 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Centralized exception handler for the entire application.
+ * Converts exceptions into structured {@link ErrorResponse} objects.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    Map<String, Object> response = new HashMap<>();
-
-    response.put("timestamp", LocalDateTime.now());
-    response.put("status", HttpStatus.BAD_REQUEST.value());
-    response.put("error", "Validation Failed");
-    response.put("code", ValidationError.INVALID_JSON.getCode());
-
+  public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
     Map<String, String> fieldErrors = new HashMap<>();
-    ex.getBindingResult().getAllErrors().forEach((error) -> {
+    ex.getBindingResult().getAllErrors().forEach(error -> {
       String fieldName = ((FieldError) error).getField();
       String errorMessage = error.getDefaultMessage();
       fieldErrors.put(fieldName, errorMessage);
     });
 
-    response.put("messages", fieldErrors);
-
-    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    ErrorResponse response = new ErrorResponse(
+        HttpStatus.BAD_REQUEST.value(),
+        "Validation Failed",
+        ValidationError.INVALID_JSON.getCode(),
+        "One or more fields failed validation",
+        fieldErrors);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
   }
-
 
   @ExceptionHandler(BusinessException.class)
-  public ResponseEntity<Map<String, Object>> handleBusinessException(BusinessException ex) {
-    Map<String, Object> response = new HashMap<>();
-
-    response.put("timestamp", LocalDateTime.now());
-    response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-    response.put("error", "Business Error");
-    response.put("code", ex.getErrorCode());
-    response.put("message", ex.getErrorDescription());
-
-    if (ex.getErrorParam() != null) {
-      response.put("param", ex.getErrorParam());
-    }
-
-    return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+  public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
+    HttpStatus status = ex.getHttpStatus();
+    ErrorResponse response = new ErrorResponse(
+        status.value(),
+        "Business Error",
+        ex.getErrorCode(),
+        ex.getErrorDescription());
+    return ResponseEntity.status(status).body(response);
   }
-
 
   @ExceptionHandler(FieldNotValidException.class)
-  public ResponseEntity<Map<String, Object>> handleFieldNotValidException(FieldNotValidException ex) {
-    Map<String, Object> response = new HashMap<>();
-
-    response.put("timestamp", LocalDateTime.now());
-    response.put("status", HttpStatus.BAD_REQUEST.value());
-    response.put("error", "Field Validation Error");
-
-    response.put("code", ex.getErrorCode());
-    response.put("message", ex.getErrorDescription());
-    response.put("field", ex.getErrorField());
-
-    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  public ResponseEntity<ErrorResponse> handleFieldNotValidException(FieldNotValidException ex) {
+    Map<String, String> fieldErrors = Map.of(ex.getErrorField(), ex.getErrorDescription());
+    ErrorResponse response = new ErrorResponse(
+        HttpStatus.BAD_REQUEST.value(),
+        "Field Validation Error",
+        ex.getResolvedErrorCode(),
+        ex.getErrorDescription(),
+        fieldErrors);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
   }
 
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    ErrorResponse response = new ErrorResponse(
+        HttpStatus.CONFLICT.value(),
+        "Data Integrity Violation",
+        "DUPLICATE_ENTRY",
+        "A database constraint was violated (e.g. duplicate email or code)");
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+  }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
-    Map<String, Object> response = new HashMap<>();
-
-    response.put("timestamp", LocalDateTime.now());
-    response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-    response.put("error", "Internal Server Error");
-    response.put("message", "Une erreur interne est survenue.");
-
-
-
-    return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-  }
-  @ExceptionHandler(DataIntegrityViolationException.class)
-  public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-    Map<String, Object> response = new HashMap<>();
-    response.put("timestamp", LocalDateTime.now());
-    response.put("status", HttpStatus.CONFLICT.value());
-    response.put("error", "Data Integrity Violation");
-    response.put("message", "Violation de contrainte en base : email ou code déjà utilisé.");
-    return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+  public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
+    ErrorResponse response = new ErrorResponse(
+        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        "Internal Server Error",
+        "INTERNAL_ERROR",
+        "An unexpected internal error occurred");
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
   }
 }

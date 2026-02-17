@@ -2,25 +2,16 @@ package com.food.reservation.customer.dto;
 
 import jakarta.validation.constraints.*;
 
+/**
+ * DTO for creating a new customer. Does not include {@code id} or {@code code}
+ * since those are generated server-side.
+ */
 public record CustomerDTO(
-        // ID nkhlliweh optional (null f creation)
-        Long id,
+                @NotBlank(message = "First name is required") @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters") @Pattern(regexp = "^[a-zA-Z\\s\\-']+$", message = "First name can only contain letters, spaces, hyphens, and apostrophes") String firstName,
 
-        @NotBlank(message = "Smiya daroriya")
-        @Size(min = 2, max = 50, message = "Smiya khass tkon bin 2 w 50 7arf")
-        @Pattern(regexp = "^[a-zA-Z\\s\\-']+$", message = "Smiya fiha huruf mamzyanin")
-        String firstName,
+                @NotBlank(message = "Last name is required") @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters") @Pattern(regexp = "^[a-zA-Z\\s\\-']+$", message = "Last name can only contain letters, spaces, hyphens, and apostrophes") String lastName,
 
-        @NotBlank(message = "Knya daroriya")
-        @Size(min = 2, max = 50, message = "Knya khass tkon bin 2 w 50 7arf")
-        @Pattern(regexp = "^[a-zA-Z\\s\\-']+$", message = "Knya fiha huruf mamzyanin")
-        String lastName,
+                @NotBlank(message = "Email is required") @Email(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = "Email should be valid") String email,
 
-        @NotBlank(message = "Email darori")
-        @Email(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = "Email machi s7i7")
-        String email,
-
-        @NotBlank(message = "Nemra d tele daroriya")
-        @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Nemra d tele machi s7i7a")
-        String phone
-) {}
+                @NotBlank(message = "Phone number is required") @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Phone number is invalid") String phone) {
+}

@@ -25,7 +25,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/delivery_db
       - SPRING_DATASOURCE_USERNAME=ilyas
       - SPRING_DATASOURCE_PASSWORD=password
-    # Bach l-app mat-demarrich 7tta t-kun DB wajda 100%
+    # Wait for PostgreSQL to be fully ready before starting the app
     depends_on:
       postgres:
         condition: service_healthy

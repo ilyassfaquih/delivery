@@ -1,24 +1,30 @@
-package com.food.reservation.exception;
+package com.food.reservation.customer.exception;
 
-import lombok.*;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
-@AllArgsConstructor
-@Getter @Setter
-@NoArgsConstructor
-@Builder
+/**
+ * Exception thrown when a business rule is violated.
+ * Carries an error code, a human-readable description, and
+ * the HTTP status that the global handler should return.
+ */
+@Getter
 public class BusinessException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    @Builder.Default
-    private String errorDescription = "The system had an internal exception";
+    private final String errorCode;
+    private final String errorDescription;
+    private final HttpStatus httpStatus;
 
-    private String errorCode;
+    public BusinessException(String errorCode, String errorDescription, HttpStatus httpStatus) {
+        super(errorDescription);
+        this.errorCode = errorCode;
+        this.errorDescription = errorDescription;
+        this.httpStatus = httpStatus;
+    }
 
-    private String errorParam;
-
-    public BusinessException(String code, String description) {
-        this.errorCode = code;
-        this.errorDescription = description;
+    public BusinessException(String errorCode, String errorDescription) {
+        this(errorCode, errorDescription, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

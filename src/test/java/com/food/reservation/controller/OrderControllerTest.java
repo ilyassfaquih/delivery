@@ -8,7 +8,7 @@ import com.food.reservation.customer.service.ReservationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -19,34 +19,36 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(OrderController.class) // كنشارجيو غير الكونترولر بوحدو باش يكون التيست خفيف
+/**
+ * Unit tests for {@link OrderController}.
+ * Uses {@code @WebMvcTest} to load only the web layer.
+ */
+@WebMvcTest(OrderController.class)
 class OrderControllerTest {
 
     @Autowired
-    private MockMvc mockMvc; // هاد الأداة هي باش كنصيفطو Request
+    private MockMvc mockMvc;
 
-    @MockBean // كنحتاجو نموكيو السرفيس حيت الكونترولر كيعيط عليه
+    @MockitoBean
     private ReservationService reservationService;
 
     @Autowired
-    private ObjectMapper objectMapper; // باش نحولو Java Object ل JSON
+    private ObjectMapper objectMapper;
 
     @Test
     void createOrder_ShouldReturnBadRequest_WhenTimeIsInvalid() throws Exception {
-        // --- ARRANGE ---
-        // درنا وقت غالط (07:00 صباحاً) - خارج أوقات العمل
+        // Arrange — delivery time 07:00 is outside business hours
         OrderRequestDTO invalidRequest = new OrderRequestDTO(
-                "uiid-09-1234",
+                "some-customer-code",
                 LocalTime.of(7, 0),
-                DeliveryMode.PRISE,
-                List.of(1L)
-        );
+                DeliveryMode.PICKUP,
+                List.of(1L));
 
-        // --- ACT & ASSERT ---
-        mockMvc.perform(post("/api/orders") // نصيفطو POST Request
-                        .contentType(MediaType.APPLICATION_JSON) // النوع JSON
-                        .content(objectMapper.writeValueAsString(invalidRequest))) // كنحطو الداتا
-                .andExpect(status().isBadRequest()) // كنتوقعو يجاوبنا ب 400 Bad Request
-                .andExpect(jsonPath("$.error").value("Validation Failed")); // كنتأكد من الميساج
+        // Act & Assert
+        mockMvc.perform(post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation Failed"));
     }
 }

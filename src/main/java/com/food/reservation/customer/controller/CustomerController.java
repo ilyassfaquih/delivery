@@ -1,33 +1,33 @@
 package com.food.reservation.customer.controller;
 
-import com.food.reservation.customer.domain.Customer;
 import com.food.reservation.customer.dto.CustomerDTO;
-import com.food.reservation.customer.mapper.AppMapper;
-import com.food.reservation.customer.repository.CustomerRepository;
+import com.food.reservation.customer.dto.CustomerResponseDTO;
+import com.food.reservation.customer.service.CustomerService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for customer registration.
+ */
 @RestController
 @RequestMapping("/api/customers")
+@RequiredArgsConstructor
 public class CustomerController {
 
-    private final CustomerRepository customerRepository;
-    private final AppMapper appMapper;
+    private final CustomerService customerService;
 
-    public CustomerController(CustomerRepository customerRepository, AppMapper appMapper) {
-        this.customerRepository = customerRepository;
-        this.appMapper = appMapper;
-    }
-
+    /**
+     * Registers a new customer.
+     *
+     * @param dto the customer creation payload
+     * @return HTTP 201 with the created customer
+     */
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@Valid @RequestBody CustomerDTO customerDTO) {
-
-        Customer customer = appMapper.toCustomerEntity(customerDTO);
-
-
-        Customer savedCustomer = customerRepository.save(customer);
-        return new ResponseEntity<>(savedCustomer, HttpStatus.CREATED);
+    public ResponseEntity<CustomerResponseDTO> createCustomer(@Valid @RequestBody CustomerDTO dto) {
+        CustomerResponseDTO response = customerService.createCustomer(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

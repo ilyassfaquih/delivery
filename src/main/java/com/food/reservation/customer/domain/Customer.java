@@ -7,13 +7,17 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+/**
+ * Represents a registered customer who can place food orders.
+ * The {@code code} is auto-generated on persist using a UUID.
+ */
 @Entity
-@Table(name = "customer",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "email"),
-                @UniqueConstraint(columnNames = "code")
-        })
+@Table(name = "customer", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "code")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,12 +29,8 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @Column(name = "code", unique = true, nullable = false, updatable = false)
-    @NotNull(message = "Customer code cannot be null")
-    @Size(min = 10, max = 50, message = "Code must be between 10 and 50 characters")
     private String code;
-
 
     @Column(nullable = false)
     @NotBlank(message = "First name is required")
@@ -44,7 +44,6 @@ public class Customer {
     @Pattern(regexp = "^[a-zA-Z\\s\\-']+$", message = "Last name can only contain letters, spaces, hyphens, and apostrophes")
     private String lastName;
 
-
     @Column(nullable = false, unique = true)
     @NotBlank(message = "Email is required")
     @Email(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = "Email should be valid")
@@ -56,7 +55,6 @@ public class Customer {
     @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Phone number is invalid")
     private String phone;
 
-
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -64,12 +62,13 @@ public class Customer {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-
+    /**
+     * Generates a UUID-based customer code if one has not been provided.
+     */
     @PrePersist
     public void generateCode() {
         if (this.code == null || this.code.isEmpty()) {
-            int randomNumber = (int) (Math.random() * 10000);
-            this.code = "uiid-09-" + String.format("%04d", randomNumber);
+            this.code = UUID.randomUUID().toString();
         }
     }
 }
